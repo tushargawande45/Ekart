@@ -1,0 +1,43 @@
+@Library('my-shared-library') _
+
+pipeline {
+    agent any
+    tools {
+        jdk ' jdk17'
+        maven 'maven3'
+    }
+    environment {
+        SCANNER_HOME = tool 'sonar-scanner'
+    }
+
+    stages {
+        stage('Git Checkout') {
+            steps {
+                gitCheckout('https://github.com/tushargawande45/Ekart', 'd8bed3b5-241c-4e87-9889-b3d7757a0600')
+            }
+        }
+        stage('Compile & Build') {
+            steps {
+                buildProject()
+            }
+        }
+        stage('SonarQube Scan') {
+            steps {
+                sonarScan('Ekart', 'Ekart', 'sonar-server')
+            }
+        }
+        stage('Docker Build and Push') {
+            steps {
+                script {
+                    dockerOps.buildAndPush('ekart', 'docker/Dockerfile')
+                }
+            }
+        }
+
+        stage('Deploy App') {
+            steps {
+                deployApp('shoppingweb-shoppingweb', '8070', 'tushargawande/ekart')
+            }
+        }
+    }
+}
